@@ -57,32 +57,47 @@ func (mr *MockArticleRepositoryMockRecorder) Create(ctx, article any) *gomock.Ca
 }
 
 // DeleteByUUID mocks base method.
-func (m *MockArticleRepository) DeleteByUUID(ctx context.Context, id uuid.UUID) error {
+func (m *MockArticleRepository) DeleteByUUID(ctx context.Context, uuid uuid.UUID) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteByUUID", ctx, id)
+	ret := m.ctrl.Call(m, "DeleteByUUID", ctx, uuid)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // DeleteByUUID indicates an expected call of DeleteByUUID.
-func (mr *MockArticleRepositoryMockRecorder) DeleteByUUID(ctx, id any) *gomock.Call {
+func (mr *MockArticleRepositoryMockRecorder) DeleteByUUID(ctx, uuid any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByUUID", reflect.TypeOf((*MockArticleRepository)(nil).DeleteByUUID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteByUUID", reflect.TypeOf((*MockArticleRepository)(nil).DeleteByUUID), ctx, uuid)
 }
 
 // FindByUUID mocks base method.
-func (m *MockArticleRepository) FindByUUID(ctx context.Context, id uuid.UUID) (*data.Article, error) {
+func (m *MockArticleRepository) FindByUUID(ctx context.Context, uuid uuid.UUID) (*data.Article, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByUUID", ctx, id)
+	ret := m.ctrl.Call(m, "FindByUUID", ctx, uuid)
 	ret0, _ := ret[0].(*data.Article)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByUUID indicates an expected call of FindByUUID.
-func (mr *MockArticleRepositoryMockRecorder) FindByUUID(ctx, id any) *gomock.Call {
+func (mr *MockArticleRepositoryMockRecorder) FindByUUID(ctx, uuid any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByUUID", reflect.TypeOf((*MockArticleRepository)(nil).FindByUUID), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByUUID", reflect.TypeOf((*MockArticleRepository)(nil).FindByUUID), ctx, uuid)
+}
+
+// List mocks base method.
+func (m *MockArticleRepository) List(ctx context.Context, params *data.ArticleListParameters) ([]data.Article, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", ctx, params)
+	ret0, _ := ret[0].([]data.Article)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockArticleRepositoryMockRecorder) List(ctx, params any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockArticleRepository)(nil).List), ctx, params)
 }
 
 // Update mocks base method.

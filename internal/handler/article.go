@@ -2,47 +2,66 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 
 	"app/internal/data"
-	"app/internal/handler/presenter"
 )
 
 const paramArticleID string = "articleID"
 
 type (
-	articlePresenter interface {
-		Render(w http.ResponseWriter, r *http.Request, data *data.Article)
+	articleCreateRequest struct {
+		Author string `json:"author" validate:"required"`
+		Title  string `json:"title" validate:"required"`
+		Text   string `json:"text" validate:"required"`
 	}
 
-	errorPresenter interface {
-		Render(w http.ResponseWriter, r *http.Request, err error)
+	articleUpdateRequest struct {
+		UUID   uuid.UUID `json:"uuid"  validate:"required"`
+		Author string    `json:"author"  validate:"required"`
+		Title  string    `json:"title"  validate:"required"`
+		Text   string    `json:"text"  validate:"required"`
+	}
+
+	articleListRequest struct {
+		Author string `json:"author"  validate:"required"`
+		Title  string `json:"title"  validate:"required"`
+		Text   string `json:"text"  validate:"required"`
+	}
+
+	articleResponse struct {
+		UUID   string `json:"uuid"`
+		Author string `json:"author"`
+		Title  string `json:"title"`
+		Text   string `json:"text"`
 	}
 
 	articleService interface {
-		Create(ctx context.Context, object *data.CreateArticle) (uuid.UUID, error)
+		Create(ctx context.Context, object *data.CreateArticle) (*data.Article, error)
 		List(ctx context.Context, parameters *data.ArticleListParameters) ([]data.Article, error)
 		LoadByID(ctx context.Context, uuid uuid.UUID) (*data.Article, error)
-		Update(ctx context.Context, uuid uuid.UUID, object *data.UpdateArticle) error
+		Update(ctx context.Context, uuid uuid.UUID, object *data.UpdateArticle) (*data.Article, error)
 		DeleteByUUID(ctx context.Context, uuid uuid.UUID) error
 	}
 
 	ArticleHandler struct {
-		articleService   articleService
-		articlePresenter articlePresenter
-		errorPresenter   errorPresenter
+		articleService articleService
+		validator      *validator.Validate
 	}
 )
 
 func ArticleRouter(articleHandler *ArticleHandler) http.Handler {
 	r := chi.NewRouter()
 
-	//r.Method("GET", "/", articleHandler.List())
-	r.Method("POST", "/", articleHandler.Create())
+	r.Get("/", articleHandler.List())
+	r.Post("/", articleHandler.Create())
 	r.Route(fmt.Sprintf("/{%s}", paramArticleID), func(r chi.Router) {
 		r.Get("/", articleHandler.View())
 		r.Put("/", articleHandler.Update())
@@ -54,95 +73,113 @@ func ArticleRouter(articleHandler *ArticleHandler) http.Handler {
 
 func NewArticleHandler(
 	articleService articleService,
-	articlePresenter articlePresenter,
-	errorPresenter errorPresenter,
+	validator *validator.Validate,
 ) *ArticleHandler {
 	return &ArticleHandler{
-		articleService:   articleService,
-		articlePresenter: articlePresenter,
-		errorPresenter:   errorPresenter,
+		articleService: articleService,
+		validator:      validator,
 	}
 }
 
 func (h *ArticleHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		binder := presenter.NewArticleCreateRequest()
+		createRequest := &articleCreateRequest{}
 
-		articleRequest, err := binder.Bind(r)
-		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("Handler.ArticleHandler.Create: %w", err))
+		if err := json.NewDecoder(r.Body).Decode(createRequest); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
-		articleUUID, err := h.articleService.Create(r.Context(), articleRequest)
-		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("Handler.ArticleHandler.View: %w", err))
+		if err := h.validator.Struct(createRequest); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
-		article, err := h.articleService.LoadByID(r.Context(), articleUUID)
+		articleCreate := &data.CreateArticle{
+			UUID:   uuid.New(),
+			Author: createRequest.Author,
+			Title:  createRequest.Title,
+			Text:   createRequest.Text,
+		}
+
+		newArticle, err := h.articleService.Create(r.Context(), articleCreate)
 		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("Handler.ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrByError(err))
 			return
 		}
 
-		h.articlePresenter.Render(w, r, article)
+		w.WriteHeader(http.StatusCreated)
+		render.Render(w, r, newArticleResponse(newArticle))
 	}
 }
 
 func (h *ArticleHandler) View() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		articleUUID, err := h.getUUID(r)
+		articleUUID, err := h.getUUID(r, paramArticleID)
 		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
 		article, err := h.articleService.LoadByID(r.Context(), articleUUID)
 		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrByError(err))
 			return
 		}
 
-		h.articlePresenter.Render(w, r, article)
+		render.Render(w, r, newArticleResponse(article))
 	}
 }
 
 func (h *ArticleHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		binder := presenter.NewArticleUpdateRequest()
-
-		articleUpdate, err := binder.Bind(r)
+		articleUUID, err := h.getUUID(r, paramArticleID)
 		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
-		if err := h.articleService.Update(r.Context(), uuid.UUID{}, articleUpdate); err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+		request := &articleUpdateRequest{
+			UUID: articleUUID,
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(request); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
-		article, err := h.articleService.LoadByID(r.Context(), articleUpdate.UUID)
+		if err := h.validator.Struct(request); err != nil {
+			render.Render(w, r, ErrInvalidRequest(err))
+			return
+		}
+
+		updateArticle := &data.UpdateArticle{
+			Author: request.Author,
+			Title:  request.Title,
+			Text:   request.Text,
+		}
+
+		updatedArticle, err := h.articleService.Update(r.Context(), articleUUID, updateArticle)
 		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrByError(err))
 			return
 		}
 
-		h.articlePresenter.Render(w, r, article)
+		w.WriteHeader(http.StatusOK)
+		render.Render(w, r, newArticleResponse(updatedArticle))
 	}
 }
 
 func (h *ArticleHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		uuid, err := h.getUUID(r)
+		uuid, err := h.getUUID(r, paramArticleID)
 		if err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrInvalidRequest(err))
 			return
 		}
 
 		if err := h.articleService.DeleteByUUID(r.Context(), uuid); err != nil {
-			h.errorPresenter.Render(w, r, fmt.Errorf("ArticleHandler.View: %w", err))
+			render.Render(w, r, ErrByError(err))
 			return
 		}
 
@@ -150,22 +187,37 @@ func (h *ArticleHandler) Delete() http.HandlerFunc {
 	}
 }
 
-func (h *ArticleHandler) List() func(w http.ResponseWriter, r *http.Request) error {
-	return func(w http.ResponseWriter, r *http.Request) error {
-		return nil
+func (h *ArticleHandler) List() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		//articles, err := h.articleService.List(r.Context(), &data.ArticleListParameters{})
+
+		//h.articleListPresenter.Render(w, r, articles)
 	}
 }
 
-func (h *ArticleHandler) getUUID(r *http.Request) (uuid.UUID, error) {
-	id := chi.URLParam(r, paramArticleID)
+func (h *ArticleHandler) getUUID(r *http.Request, paramName string) (uuid.UUID, error) {
+	id := chi.URLParam(r, paramName)
 	if id == "" {
 		return uuid.UUID{}, data.ErrParameterNotFound
 	}
 
 	articleUUID, err := uuid.Parse(id)
 	if err != nil {
-		return uuid.UUID{}, fmt.Errorf("Handler.ArticleUUID: %w", err)
+		return uuid.UUID{}, fmt.Errorf("Handler.getUUID: %w", err)
 	}
 
 	return articleUUID, nil
+}
+
+func newArticleResponse(article *data.Article) *articleResponse {
+	return &articleResponse{
+		UUID:   article.UUID.String(),
+		Author: article.Author,
+		Title:  article.Title,
+		Text:   article.Text,
+	}
+}
+
+func (ar *articleResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
