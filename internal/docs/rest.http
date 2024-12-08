@@ -1,0 +1,2 @@
+GET http://localhost:3333/v1/articles/5adb408f-6620-4023-bbe8-abca8b635359
+Accept: application/json
