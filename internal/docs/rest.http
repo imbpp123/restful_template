@@ -1,5 +1,5 @@
 ### GET from https://railway.app/project/2d063f83-8eb9-4279-9d09-73c543e94981/service/7a779eca-71a9-48d0-bd1c-c753aad19205/settings
-GET https://restfultemplate-production.up.railway.app/v1/articles/3ebf5cd9-2e18-4fbc-ac21-1706950a0230
+GET https://restfultemplate-production.up.railway.app/v1/articles/d8ebb324-a434-4615-a66c-325c9e0bf097
 Accept: application/json
 
 ### Create article
@@ -8,6 +8,16 @@ Accept: application/json
 
 {
     "title": "Test",
+    "text": "Test",
+    "author": "cool author"
+}
+
+### Create article
+PUT https://restfultemplate-production.up.railway.app/v1/articles/d8ebb324-a434-4615-a66c-325c9e0bf097
+Accept: application/json
+
+{
+    "title": "another title",
     "text": "Test",
     "author": "cool author"
 }
