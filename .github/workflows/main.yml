@@ -1,0 +1,50 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23.1
+
+      - name: Install dependencies
+        run: go mod tidy
+
+      - name: Run tests
+        run: go test ./... -v
+
+      - name: Build project
+        run: go build -o app ./cmd/api
+
+      - name: Docker build
+        run: docker build -t http_template .
+
+      - name: Docker build
+        run: docker build -t http_template .
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Push Docker image to GitHub Container Registry
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository }}/http_template:latest
+          docker tag http_template $IMAGE_NAME
+          docker push $IMAGE_NAME
