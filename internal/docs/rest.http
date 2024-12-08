@@ -1,2 +1,17 @@
-GET http://localhost:3333/v1/articles/5adb408f-6620-4023-bbe8-abca8b635359
+### GET from https://railway.app/project/2d063f83-8eb9-4279-9d09-73c543e94981/service/7a779eca-71a9-48d0-bd1c-c753aad19205/settings
+GET https://restfultemplate-production.up.railway.app/v1/articles/3ebf5cd9-2e18-4fbc-ac21-1706950a0230
+Accept: application/json
+
+### Create article
+POST https://restfultemplate-production.up.railway.app/v1/articles
+Accept: application/json
+
+{
+    "title": "Test",
+    "text": "Test",
+    "author": "cool author"
+}
+
+### Delete article
+DELETE https://restfultemplate-production.up.railway.app/v1/articles/3ebf5cd9-2e18-4fbc-ac21-1706950a0230
 Accept: application/json
