@@ -27,12 +27,6 @@ jobs:
       - name: Run tests
         run: go test ./... -v
 
-      - name: Build project
-        run: go build -o app ./cmd/api
-
-      - name: Docker build
-        run: docker build -t http_template .
-
       - name: Docker build
         run: docker build -t http_template .
       
