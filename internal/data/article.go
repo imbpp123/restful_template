@@ -8,13 +8,12 @@ import (
 
 type (
 	Article struct {
-		ID        uuid.UUID
+		UUID      uuid.UUID
 		CreatedAt time.Time
 		UpdatedAt time.Time
 		Title     string
 		Author    string
 		Text      string
-		Tags      []string
 	}
 
 	CreateArticle struct {
@@ -22,15 +21,12 @@ type (
 		Title  string
 		Author string
 		Text   string
-		Tags   []string
 	}
 
 	UpdateArticle struct {
-		UUID   uuid.UUID
 		Title  string
 		Author string
 		Text   string
-		Tags   []string
 	}
 
 	ArticleListParameters struct {
@@ -42,6 +38,6 @@ type (
 
 func NewArticle(uuid uuid.UUID) *Article {
 	return &Article{
-		ID: uuid,
+		UUID: uuid,
 	}
 }

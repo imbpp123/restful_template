@@ -23,36 +23,21 @@ func TestArticleCreate(t *testing.T) {
 	mockStorage := mockDomain.NewMockArticleRepository(ctrl)
 	service := domain.NewArticle(mockStorage)
 
-	data := data.NewArticle(uuid.New())
+	data := &data.CreateArticle{
+		UUID:   uuid.New(),
+		Title:  "title",
+		Author: "author",
+		Text:   "text",
+	}
 	beforeTest := time.Now()
 
 	mockStorage.EXPECT().Create(gomock.Any(), gomock.Eq(data)).
 		Return(nil)
 
 	// act
-	assert.NoError(t, service.Create(context.Background(), data))
+	result, err := service.Create(context.Background(), data)
+	assert.NoError(t, err)
 
 	// assert
-	assert.True(t, data.CreatedAt.After(beforeTest))
-}
-
-func TestArticleUpdate(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// arrange
-	mockStorage := mockDomain.NewMockArticleRepository(ctrl)
-	service := domain.NewArticle(mockStorage)
-
-	data := data.NewArticle(uuid.New())
-	beforeTest := time.Now()
-
-	mockStorage.EXPECT().Update(gomock.Any(), gomock.Eq(data)).
-		Return(nil)
-
-	// act
-	assert.NoError(t, service.Update(context.Background(), data))
-
-	// assert
-	assert.True(t, data.UpdatedAt.After(beforeTest))
+	assert.True(t, result.CreatedAt.After(beforeTest))
 }

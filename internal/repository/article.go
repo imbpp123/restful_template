@@ -16,7 +16,9 @@ type Article struct {
 }
 
 func NewArticle() *Article {
-	return &Article{}
+	return &Article{
+		data: make(map[string]data.Article),
+	}
 }
 
 func (a *Article) FindByUUID(ctx context.Context, id uuid.UUID) (*data.Article, error) {
@@ -47,9 +49,36 @@ func (a *Article) List(ctx context.Context, params *data.ArticleListParameters) 
 }
 
 func (a *Article) Create(ctx context.Context, article *data.Article) error {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	idStr := article.UUID.String()
+	a.data[idStr] = *article
+
 	return nil
 }
 
 func (a *Article) Update(ctx context.Context, article *data.Article) error {
+	a.m.Lock()
+	defer a.m.Unlock()
+
+	idStr := article.UUID.String()
+
+	var (
+		dbArticle data.Article
+		ok        bool
+	)
+
+	if dbArticle, ok = a.data[idStr]; !ok {
+		return data.ErrArticleNotFound
+	}
+
+	dbArticle.Author = article.Author
+	dbArticle.Title = article.Title
+	dbArticle.Text = article.Text
+	dbArticle.UpdatedAt = article.UpdatedAt
+
+	a.data[idStr] = dbArticle
+
 	return nil
 }

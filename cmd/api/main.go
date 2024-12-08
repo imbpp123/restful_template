@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	if err := http.ListenAndServe(":3333", internal.RouterInitializer()); err != nil {
+	articleHandler := internal.InitializeArticleHandler()
+	if err := http.ListenAndServe(":3333", internal.RouterInitializer(articleHandler)); err != nil {
 		log.Fatal(err)
 	}
 }
