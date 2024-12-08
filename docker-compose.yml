@@ -1,0 +1,9 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: http_template_app
+    ports:
+      - "3333:3333"
+      
