@@ -9,8 +9,9 @@ import (
 )
 
 func main() {
-	articleHandler := internal.InitializeArticleHandler()
 	fmt.Print("Lets do the job!")
+	articleHandler := internal.InitializeArticleHandler()
+	fmt.Print("Handler was created")
 	if err := http.ListenAndServe(":3333", internal.RouterInitializer(articleHandler)); err != nil {
 		log.Fatal(err)
 	}
