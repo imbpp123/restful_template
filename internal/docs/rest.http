@@ -25,3 +25,20 @@ Accept: application/json
 ### Delete article
 DELETE https://restfultemplate-production.up.railway.app/v1/articles/3ebf5cd9-2e18-4fbc-ac21-1706950a0230
 Accept: application/json
+
+###
+POST http://127.0.0.1:3333/location/steve/now
+Content-Type: application/json
+
+{
+    "lat": 16.45,
+    "long": 56.78
+}
+
+###
+GET http://127.0.0.1:3333/location/steve?max=5
+Content-Type: application/json
+
+###
+GET http://127.0.0.1:3333/location/steve
+Content-Type: application/json

@@ -26,6 +26,15 @@ func RouterInitializer(articleHandler *handler.ArticleHandler) *chi.Mux {
 		r.Mount("/articles", articleRouter)
 	})
 
+	locationRepository := repository.NewLocation()
+	locationService := domain.NewLocationService(locationRepository)
+	locationHandler := handler.NewLocationHandler(
+		locationService,
+		validator.New(),
+	)
+
+	r.Mount("/location", handler.LocationRouter(locationHandler))
+
 	return r
 }
 

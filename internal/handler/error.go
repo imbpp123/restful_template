@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"app/internal/data"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -56,6 +57,15 @@ func ErrInternalError(err error) render.Renderer {
 func ErrByError(err error) render.Renderer {
 	// logic of selecting errors from map or error
 	// ...
+	switch err {
+	case data.ErrArticleNotFound:
+		return &ErrorResponse{
+			Err:            err,
+			HTTPStatusCode: http.StatusNotFound,
+			StatusText:     "Resource not found.",
+			ErrorText:      err.Error(),
+		}
+	}
 
 	return &ErrorResponse{
 		Err:            err,
